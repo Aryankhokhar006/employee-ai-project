@@ -156,8 +156,15 @@ function App() {
       }}
     >
       <div style={{ maxWidth: "1100px", margin: "auto" }}>
-        <h1 style={{ textAlign: "center", marginBottom: "30px" }}>
-          AI-Based Employee Performance Analytics System
+        <h1
+  style={{
+    textAlign: "center",
+    marginBottom: "40px",
+    fontSize: "48px",
+    lineHeight: "1.2",
+  }}
+>
+          AI Employee Analytics System
         </h1>
 
         <div
