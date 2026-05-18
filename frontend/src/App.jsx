@@ -1,65 +1,24 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { LayoutDashboard, Users, Target, Activity } from 'lucide-react';
+import CandidateForm from './components/CandidateForm';
+import MatchForm from './components/MatchForm';
+import CandidateCard from './components/CandidateCard';
+import AnalyticsChart from './components/AnalyticsChart';
+import AIAnalysisModal from './components/AIAnalysisModal';
+
+const API_BASE_URL = 'http://localhost:3000/api';
+
 function App() {
-  const API_URL = "https://employee-ai-backend-1aib.onrender.com";
-
   const [candidates, setCandidates] = useState([]);
-  const [skillsInput, setSkillsInput] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-
-  const [jobData, setJobData] = useState({
-    requiredSkills: "",
-    minExperience: "",
-  });
-
-  const [matchedCandidates, setMatchedCandidates] = useState([]);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    department: "",
-    skills: "",
-    performanceScore: "",
-    experience: "",
-  });
-
-  const cardStyle = {
-    backgroundColor: "#1e293b",
-    padding: "20px",
-    borderRadius: "14px",
-    color: "white",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
-    marginBottom: "20px",
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #334155",
-    backgroundColor: "#0f172a",
-    color: "white",
-    marginTop: "6px",
-  };
-
-  const buttonStyle = {
-    padding: "12px 20px",
-    borderRadius: "8px",
-    border: "none",
-    backgroundColor: "#38bdf8",
-    color: "#020617",
-    fontWeight: "bold",
-    cursor: "pointer",
-    marginTop: "10px",
-  };
+  const [loading, setLoading] = useState(true);
+  const [isMatchMode, setIsMatchMode] = useState(false);
+  
+  // AI Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiData, setAiData] = useState(null);
 
   useEffect(() => {
     fetchCandidates();
@@ -67,350 +26,166 @@ function App() {
 
   const fetchCandidates = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/candidates`);
-      setCandidates(response.data);
-    } catch (error) {
-      console.log(error);
+      setLoading(true);
+      const res = await axios.get(`${API_BASE_URL}/candidates`);
+      setCandidates(res.data);
+      setIsMatchMode(false);
+    } catch (err) {
+      console.error('Error fetching candidates', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleJobChange = (e) => {
-    setJobData({
-      ...jobData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleAddCandidate = async (candidateData) => {
     try {
-      const newCandidate = {
-        ...formData,
-        skills: formData.skills
-          .split(",")
-          .map((skill) => skill.trim()),
-      };
-
-      await axios.post(`${API_URL}/api/candidates`, newCandidate);
-
+      await axios.post(`${API_BASE_URL}/candidates`, candidateData);
       fetchCandidates();
-
-      setFormData({
-        name: "",
-        email: "",
-        department: "",
-        skills: "",
-        performanceScore: "",
-        experience: "",
-      });
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error adding candidate');
     }
   };
 
-  const deleteCandidate = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/api/candidates/${id}`);
+  const handleDeleteCandidate = async (id) => {
+    if (window.confirm('Are you sure you want to delete this employee?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/candidates/${id}`);
+        fetchCandidates();
+      } catch (err) {
+        console.error('Error deleting candidate', err);
+      }
+    }
+  };
+
+  const handleMatch = async (requiredSkills, minExperience) => {
+    if (requiredSkills.length === 0) {
       fetchCandidates();
-    } catch (error) {
-      console.log(error);
+      return;
     }
-  };
 
-  const analyzeSkills = async () => {
     try {
-      const response = await axios.post(`${API_URL}/api/ai-match`, {
-        skills: skillsInput,
+      setLoading(true);
+      const res = await axios.post(`${API_BASE_URL}/match`, {
+        requiredSkills,
+        minExperience
       });
-
-      setAiResponse(response.data.response);
-    } catch (error) {
-      console.log(error);
+      setCandidates(res.data);
+      setIsMatchMode(true);
+    } catch (err) {
+      console.error('Error matching candidates', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const matchCandidates = async () => {
+  const handleAnalyze = async (candidate) => {
+    setSelectedCandidate(candidate);
+    setIsModalOpen(true);
+    setAiLoading(true);
+    setAiData(null);
+
     try {
-      const response = await axios.post(`${API_URL}/api/match`, {
-        requiredSkills: jobData.requiredSkills
-          .split(",")
-          .map((skill) => skill.trim()),
-        minExperience: Number(jobData.minExperience),
+      const res = await axios.post(`${API_BASE_URL}/ai-match`, {
+        candidateId: candidate._id
       });
-
-      setMatchedCandidates(response.data);
-    } catch (error) {
-      console.log(error);
+      setAiData(res.data);
+    } catch (err) {
+      console.error('Error with AI analysis', err);
+      alert('Failed to get AI analysis');
+      setIsModalOpen(false);
+    } finally {
+      setAiLoading(false);
     }
   };
-  const chartData = candidates.map((candidate) => ({
-  name: candidate.name,
-  performance: Number(candidate.performanceScore || 0),
-}));
+
   return (
-    <div
-      style={{
-        backgroundColor: "#020617",
-        minHeight: "100vh",
-        padding: "30px",
-        color: "white",
-        fontFamily: "Arial",
-      }}
-    >
-      <div style={{ maxWidth: "1100px", margin: "auto" }}>
-        <h1
-  style={{
-    textAlign: "center",
-    marginBottom: "40px",
-    fontSize: "48px",
-    lineHeight: "1.2",
-  }}
->
-          AI Employee Analytics System
-        </h1>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "20px",
-            marginBottom: "25px",
-          }}
-        >
-          <div style={cardStyle}>
-            <h3>Total Employees</h3>
-            <h1>{candidates.length}</h1>
-          </div>
-
-          <div style={cardStyle}>
-            <h3>Matched Employees</h3>
-            <h1>{matchedCandidates.length}</h1>
-          </div>
-
-          <div style={cardStyle}>
-            <h3>AI Module</h3>
-            <h1>Active</h1>
-          </div>
+    <div className="app-container">
+      <header className="header">
+        <div className="header-title">
+          <LayoutDashboard size={28} />
+          <span>AI Employee Analytics</span>
         </div>
-
-        <div style={cardStyle}>
-          <h2>Employee Registration Form</h2>
-
-          <form onSubmit={handleSubmit}>
-            <label>Employee Name</label>
-            <input
-              style={inputStyle}
-              type="text"
-              name="name"
-              placeholder="Enter Employee Name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <label>Email</label>
-            <input
-              style={inputStyle}
-              type="email"
-              name="email"
-              placeholder="Enter Email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <label>Department</label>
-            <input
-              style={inputStyle}
-              type="text"
-              name="department"
-              placeholder="Enter Department"
-              value={formData.department}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <label>Skills</label>
-            <input
-              style={inputStyle}
-              type="text"
-              name="skills"
-              placeholder="React, Node.js, MongoDB"
-              value={formData.skills}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <label>Performance Score</label>
-            <input
-              style={inputStyle}
-              type="number"
-              name="performanceScore"
-              placeholder="Enter Performance Score"
-              value={formData.performanceScore}
-              onChange={handleChange}
-            />
-
-            <br /><br />
-
-            <label>Years of Experience</label>
-            <input
-              style={inputStyle}
-              type="number"
-              name="experience"
-              placeholder="Enter Experience"
-              value={formData.experience}
-              onChange={handleChange}
-            />
-
-            <button style={buttonStyle} type="submit">
-              Add Employee
-            </button>
-          </form>
+        <div className="badge badge-cyan" style={{ fontSize: '0.85rem' }}>
+          <Activity size={14} style={{ marginRight: '4px' }} /> System Active
         </div>
+      </header>
 
-        <div style={cardStyle}>
-          <h2>AI Employee Recommendation</h2>
+      <main className="main-content">
+        <aside className="sidebar">
+          <CandidateForm onAddCandidate={handleAddCandidate} />
+          <MatchForm onMatch={handleMatch} />
+        </aside>
 
-          <input
-            style={inputStyle}
-            type="text"
-            placeholder="Enter employee skills/performance"
-            value={skillsInput}
-            onChange={(e) => setSkillsInput(e.target.value)}
-          />
-
-          <button style={buttonStyle} onClick={analyzeSkills}>
-            Generate AI Recommendation
-          </button>
-
-          <div
-            style={{
-              whiteSpace: "pre-wrap",
-              border: "1px solid #334155",
-              padding: "20px",
-              borderRadius: "10px",
-              backgroundColor: "#0f172a",
-              marginTop: "20px",
-              lineHeight: "1.7",
-            }}
-          >
-            {aiResponse}
-          </div>
-        </div>
-
-        <div style={cardStyle}>
-          <h2>Employee Ranking / Filter Form</h2>
-
-          <input
-            style={inputStyle}
-            type="text"
-            name="requiredSkills"
-            placeholder="Required Skills: React, Node.js"
-            value={jobData.requiredSkills}
-            onChange={handleJobChange}
-          />
-
-          <br /><br />
-
-          <input
-            style={inputStyle}
-            type="number"
-            name="minExperience"
-            placeholder="Minimum Experience"
-            value={jobData.minExperience}
-            onChange={handleJobChange}
-          />
-
-          <button style={buttonStyle} onClick={matchCandidates}>
-            Rank Employees
-          </button>
-        </div>
-            <div style={cardStyle}>
-  <h2>Performance Analytics Chart</h2>
-
-  <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={chartData}>
-      <XAxis dataKey="name" stroke="#ffffff" />
-      <YAxis stroke="#ffffff" />
-      <Tooltip />
-      <Bar dataKey="performance" fill="#38bdf8" />
-    </BarChart>
-  </ResponsiveContainer>
-</div>
-        <div style={cardStyle}>
-          <h2>Employee Analytics & Rankings</h2>
-
-          {matchedCandidates.map((candidate) => (
-            <div
-              key={candidate._id}
-              style={{
-                border: "1px solid #22c55e",
-                marginBottom: "15px",
-                padding: "18px",
-                borderRadius: "10px",
-                backgroundColor: "#052e16",
-              }}
-            >
-              <h3>{candidate.name}</h3>
-              <p>Match Score: {candidate.matchScore}%</p>
-              <p>Matched Skills: {candidate.matchedSkills.join(", ")}</p>
-              <p>Experience: {candidate.experience} years</p>
-              <p>
-                Experience Match:{" "}
-                {candidate.experienceMatch ? "Yes" : "No"}
-              </p>
+        <section className="dashboard-area">
+          <div className="overview-grid">
+            <div className="card stat-card">
+              <div className="stat-icon">
+                <Users size={24} />
+              </div>
+              <div className="stat-info">
+                <h4>Total Employees</h4>
+                <p>{isMatchMode ? '-' : candidates.length}</p>
+              </div>
             </div>
-          ))}
-        </div>
+            
+            <div className="card stat-card">
+              <div className="stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-green)' }}>
+                <Target size={24} />
+              </div>
+              <div className="stat-info">
+                <h4>{isMatchMode ? 'Matches Found' : 'Avg Performance'}</h4>
+                <p>
+                  {isMatchMode 
+                    ? candidates.length 
+                    : (candidates.length ? Math.round(candidates.reduce((acc, c) => acc + c.performanceScore, 0) / candidates.length) : 0)}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <div style={cardStyle}>
-          <h2>Employee List</h2>
+          <AnalyticsChart candidates={candidates} />
 
-          {candidates.map((candidate) => (
-            <div
-              key={candidate._id}
-              style={{
-                border: "1px solid #334155",
-                marginBottom: "15px",
-                padding: "18px",
-                borderRadius: "10px",
-                backgroundColor: "#0f172a",
-              }}
-            >
-              <h3>{candidate.name}</h3>
-              <p>Email: {candidate.email}</p>
-              <p>Department: {candidate.department}</p>
-              <p>Skills: {candidate.skills.join(", ")}</p>
-              <p>Performance Score: {candidate.performanceScore}</p>
-              <p>Experience: {candidate.experience} years</p>
-
-              <button
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#ef4444",
-                  color: "white",
-                }}
-                onClick={() => deleteCandidate(candidate._id)}
-              >
-                Delete
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>
+              {isMatchMode ? 'Matched Candidates' : 'Employee Directory'}
+            </h2>
+            {isMatchMode && (
+              <button onClick={fetchCandidates} className="btn btn-secondary btn-sm">
+                Clear Match Filter
               </button>
+            )}
+          </div>
+
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+              <div className="loader"></div>
             </div>
-          ))}
-        </div>
-      </div>
+          ) : candidates.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+              No employees found.
+            </div>
+          ) : (
+            <div className="candidates-grid">
+              {candidates.map(candidate => (
+                <CandidateCard 
+                  key={candidate._id} 
+                  candidate={candidate} 
+                  onDelete={handleDeleteCandidate}
+                  onAnalyze={handleAnalyze}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <AIAnalysisModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        candidate={selectedCandidate}
+        loading={aiLoading}
+        aiData={aiData}
+      />
     </div>
   );
 }
