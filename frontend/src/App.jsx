@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 function App() {
   const API_URL = "https://employee-ai-backend-1aib.onrender.com";
 
@@ -144,7 +151,10 @@ function App() {
       console.log(error);
     }
   };
-
+  const chartData = candidates.map((candidate) => ({
+  name: candidate.name,
+  performance: Number(candidate.performanceScore || 0),
+}));
   return (
     <div
       style={{
@@ -328,7 +338,18 @@ function App() {
             Rank Employees
           </button>
         </div>
+            <div style={cardStyle}>
+  <h2>Performance Analytics Chart</h2>
 
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={chartData}>
+      <XAxis dataKey="name" stroke="#ffffff" />
+      <YAxis stroke="#ffffff" />
+      <Tooltip />
+      <Bar dataKey="performance" fill="#38bdf8" />
+    </BarChart>
+  </ResponsiveContainer>
+</div>
         <div style={cardStyle}>
           <h2>Employee Analytics & Rankings</h2>
 
