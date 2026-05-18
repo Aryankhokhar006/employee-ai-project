@@ -29,10 +29,9 @@ const [matchedCandidates, setMatchedCandidates] = useState([]);
   const fetchCandidates = async () => {
     try {
 
-      const response = await axios.get(
-        "http://localhost:3000/api/candidates"
-      );
-
+    const response = await axios.get(
+  "https://employee-ai-backend-1aib.onrender.com/api/candidates"
+);
       setCandidates(response.data);
 
     } catch (error) {
@@ -63,9 +62,9 @@ const [matchedCandidates, setMatchedCandidates] = useState([]);
     };
 
     await axios.post(
-      "http://localhost:3000/api/candidates",
-      newCandidate
-    );
+  "https://employee-ai-backend-1aib.onrender.com/api/candidates",
+  newCandidate
+);
 
     fetchCandidates();
 
@@ -102,7 +101,7 @@ const analyzeSkills = async () => {
   try {
 
     const response = await axios.post(
-      "http://localhost:3000/api/ai-match",
+      "https://employee-ai-backend-1aib.onrender.com/api/ai-match",
       {
         skills: skillsInput,
       }
@@ -118,7 +117,7 @@ const analyzeSkills = async () => {
 const matchCandidates = async () => {
   try {
     const response = await axios.post(
-      "http://localhost:3000/api/match",
+      "https://employee-ai-backend-1aib.onrender.com/api/match",
       {
         requiredSkills: jobData.requiredSkills
           .split(",")
