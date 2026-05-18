@@ -86,7 +86,7 @@ const deleteCandidate = async (id) => {
   try {
 
     await axios.delete(
-      `http://localhost:3000/api/candidates/${id}`
+      `https://employee-ai-backend-1aib.onrender.com/api/candidates/${id}`
     );
 
     fetchCandidates();
@@ -139,14 +139,20 @@ const matchCandidates = async () => {
   });
 };
   return (
-  <div style={{ padding: "20px" }}>
-
+  <div
+    style={{
+      padding: "30px",
+      maxWidth: "900px",
+      margin: "auto",
+      fontFamily: "Arial",
+      lineHeight: "1.8",
+    }}
+  >
     <h1>AI-Based Employee Performance Analytics System</h1>
 
     <h2>Employee Registration Form</h2>
 
     <form onSubmit={handleSubmit}>
-
       <label>Employee Name</label><br />
       <input
         type="text"
@@ -213,9 +219,7 @@ const matchCandidates = async () => {
 
       <br /><br />
 
-      <button type="submit">
-        Add Employee
-      </button>
+      <button type="submit">Add Employee</button>
     </form>
 
     <hr />
@@ -235,13 +239,16 @@ const matchCandidates = async () => {
       Generate AI Recommendation
     </button>
 
-    <br /><br />
-
     <div
       style={{
         whiteSpace: "pre-wrap",
-        border: "1px solid black",
-        padding: "10px",
+        border: "1px solid #ccc",
+        padding: "20px",
+        borderRadius: "10px",
+        backgroundColor: "#f9f9f9",
+        marginTop: "15px",
+        lineHeight: "1.7",
+        boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
       }}
     >
       {aiResponse}
@@ -271,9 +278,7 @@ const matchCandidates = async () => {
 
     <br /><br />
 
-    <button onClick={matchCandidates}>
-      Rank Employees
-    </button>
+    <button onClick={matchCandidates}>Rank Employees</button>
 
     <h2>Employee Analytics & Rankings</h2>
 
@@ -281,19 +286,18 @@ const matchCandidates = async () => {
       <div
         key={candidate._id}
         style={{
-          border: "1px solid green",
-          marginBottom: "10px",
-          padding: "10px",
+          border: "1px solid #28a745",
+          marginBottom: "20px",
+          padding: "20px",
+          borderRadius: "10px",
+          backgroundColor: "#f8fff8",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
         }}
       >
         <h3>{candidate.name}</h3>
-
         <p>Match Score: {candidate.matchScore}%</p>
-
         <p>Matched Skills: {candidate.matchedSkills.join(", ")}</p>
-
         <p>Experience: {candidate.experience} years</p>
-
         <p>
           Experience Match:{" "}
           {candidate.experienceMatch ? "Yes" : "No"}
@@ -309,21 +313,19 @@ const matchCandidates = async () => {
       <div
         key={candidate._id}
         style={{
-          border: "1px solid black",
-          marginBottom: "10px",
-          padding: "10px",
+          border: "1px solid #ccc",
+          marginBottom: "20px",
+          padding: "20px",
+          borderRadius: "10px",
+          backgroundColor: "#ffffff",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
         }}
       >
         <h3>{candidate.name}</h3>
-
         <p>Email: {candidate.email}</p>
-
         <p>Department: {candidate.department}</p>
-
         <p>Skills: {candidate.skills.join(", ")}</p>
-
         <p>Performance Score: {candidate.performanceScore}</p>
-
         <p>Experience: {candidate.experience} years</p>
 
         <button onClick={() => deleteCandidate(candidate._id)}>
